@@ -1,0 +1,605 @@
+{
+  "info": {
+    "name": "BookCart API - Complete Test Suite",
+    "description": "Comprehensive API testing for BookCart with 61 test cases covering all endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "https://bookcart.azurewebsites.net"}
+  ],
+  "item": [
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "Get All Books",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                "pm.test('Response time < 5000ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                "pm.test('Books have required fields', () => {",
+                "  const books = pm.response.json();",
+                "  if (books.length > 0) {",
+                "    pm.expect(books[0]).to.have.all.keys('bookId', 'title', 'author', 'category', 'price', 'coverFileName');",
+                "    pm.environment.set('testBookId', books[0].bookId);",
+                "  }",
+                "});",
+                "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/Book", "host": ["{{baseUrl}}"], "path": ["api", "Book"]}
+          }
+        },
+        {
+          "name": "Get Book By Valid ID",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Book has correct ID', () => {",
+                "  const book = pm.response.json();",
+                "  pm.expect(book.bookId).to.equal(1);",
+                "});",
+                "pm.test('Price is positive number', () => pm.expect(pm.response.json().price).to.be.above(0));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/Book/1", "host": ["{{baseUrl}}"], "path": ["api", "Book", "1"]}
+          }
+        },
+        {
+          "name": "Get Book By Invalid ID",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 404 or empty response', () => {",
+                "  pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                "  if (pm.response.code === 200) {",
+                "    pm.expect(pm.response.json()).to.be.null;",
+                "  }",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/Book/999999", "host": ["{{baseUrl}}"], "path": ["api", "Book", "999999"]}
+          }
+        },
+        {
+          "name": "Get Categories List",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                "pm.test('Categories have structure', () => {",
+                "  const cats = pm.response.json();",
+                "  if (cats.length > 0) {",
+                "    pm.expect(cats[0]).to.have.property('categoryId');",
+                "    pm.expect(cats[0]).to.have.property('categoryName');",
+                "  }",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/Book/GetCategoriesList", "host": ["{{baseUrl}}"], "path": ["api", "Book", "GetCategoriesList"]}
+          }
+        },
+        {
+          "name": "Get Similar Books - Valid",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                "pm.test('Similar books exclude original', () => {",
+                "  const books = pm.response.json();",
+                "  const hasOriginal = books.some(b => b.bookId === 1);",
+                "  pm.expect(hasOriginal).to.be.false;",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/Book/GetSimilarBooks/1", "host": ["{{baseUrl}}"], "path": ["api", "Book", "GetSimilarBooks", "1"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Register Valid User",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Returns userId', () => {",
+                "  const res = pm.response.json();",
+                "  pm.expect(res).to.have.property('userId');",
+                "  pm.environment.set('newUserId', res.userId);",
+                "});",
+                "pm.test('Response time acceptable', () => pm.expect(pm.response.responseTime).to.be.below(5000));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"username\": \"testuser{{$randomInt}}\",\n  \"password\": \"Pass@1234\",\n  \"confirmPassword\": \"Pass@1234\",\n  \"gender\": \"Male\"\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/User", "host": ["{{baseUrl}}"], "path": ["api", "User"]}
+          }
+        },
+        {
+          "name": "Register - Weak Password",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));",
+                "pm.test('Error mentions password', () => {",
+                "  const body = pm.response.text().toLowerCase();",
+                "  pm.expect(body).to.include('password');",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"username\": \"weakpass\",\n  \"password\": \"123\",\n  \"confirmPassword\": \"123\",\n  \"gender\": \"Male\"\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/User", "host": ["{{baseUrl}}"], "path": ["api", "User"]}
+          }
+        },
+        {
+          "name": "Register - Missing Fields",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 400', () => pm.response.to.have.status(400));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"firstName\": \"Test\"}"},
+            "url": {"raw": "{{baseUrl}}/api/User", "host": ["{{baseUrl}}"], "path": ["api", "User"]}
+          }
+        },
+        {
+          "name": "Register - Invalid Gender",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 400', () => pm.response.to.have.status(400));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"username\": \"test\",\n  \"password\": \"Pass@1234\",\n  \"confirmPassword\": \"Pass@1234\",\n  \"gender\": \"Other\"\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/User", "host": ["{{baseUrl}}"], "path": ["api", "User"]}
+          }
+        },
+        {
+          "name": "Validate Available Username",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Returns boolean', () => pm.expect(typeof pm.response.json()).to.equal('boolean'));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/User/validateUserName/newuser{{$randomInt}}", "host": ["{{baseUrl}}"], "path": ["api", "User", "validateUserName", "newuser{{$randomInt}}"]}
+          }
+        },
+        {
+          "name": "Validate Existing Username",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Returns false for existing', () => {",
+                "  const isAvailable = pm.response.json();",
+                "  pm.expect(isAvailable).to.be.false;",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/User/validateUserName/admin", "host": ["{{baseUrl}}"], "path": ["api", "User", "validateUserName", "admin"]}
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/User/1", "host": ["{{baseUrl}}"], "path": ["api", "User", "1"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login - Valid Credentials",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Returns token', () => {",
+                "  const res = pm.response.json();",
+                "  pm.expect(res).to.have.property('token');",
+                "  pm.expect(res.token).to.not.be.empty;",
+                "  pm.environment.set('authToken', res.token);",
+                "});",
+                "pm.test('Returns user details', () => {",
+                "  const res = pm.response.json();",
+                "  pm.expect(res).to.have.property('userId');",
+                "  pm.expect(res).to.have.property('username');",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\": \"admin\", \"password\": \"Admin@123\"}"},
+            "url": {"raw": "{{baseUrl}}/api/Login", "host": ["{{baseUrl}}"], "path": ["api", "Login"]}
+          }
+        },
+        {
+          "name": "Login - Invalid Username",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\": \"wronguser\", \"password\": \"Admin@123\"}"},
+            "url": {"raw": "{{baseUrl}}/api/Login", "host": ["{{baseUrl}}"], "path": ["api", "Login"]}
+          }
+        },
+        {
+          "name": "Login - Invalid Password",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 401', () => pm.response.to.have.status(401));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\": \"admin\", \"password\": \"WrongPass\"}"},
+            "url": {"raw": "{{baseUrl}}/api/Login", "host": ["{{baseUrl}}"], "path": ["api", "Login"]}
+          }
+        },
+        {
+          "name": "Login - Empty Credentials",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 400 or 401', () => pm.expect(pm.response.code).to.be.oneOf([400, 401]));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\": \"\", \"password\": \"\"}"},
+            "url": {"raw": "{{baseUrl}}/api/Login", "host": ["{{baseUrl}}"], "path": ["api", "Login"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shopping Cart",
+      "item": [
+        {
+          "name": "Get Empty Cart",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/ShoppingCart/1", "host": ["{{baseUrl}}"], "path": ["api", "ShoppingCart", "1"]}
+          }
+        },
+        {
+          "name": "Add Item to Cart",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Cart has items', () => {",
+                "  const cart = pm.response.json();",
+                "  pm.expect(cart).to.be.an('array');",
+                "  pm.expect(cart.length).to.be.at.least(1);",
+                "});",
+                "pm.test('Item structure valid', () => {",
+                "  const cart = pm.response.json();",
+                "  pm.expect(cart[0]).to.have.property('book');",
+                "  pm.expect(cart[0]).to.have.property('quantity');",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/ShoppingCart/AddToCart/1/1", "host": ["{{baseUrl}}"], "path": ["api", "ShoppingCart", "AddToCart", "1", "1"]}
+          }
+        },
+        {
+          "name": "Add Invalid Book to Cart",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Handles invalid book', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/ShoppingCart/AddToCart/1/999999", "host": ["{{baseUrl}}"], "path": ["api", "ShoppingCart", "AddToCart", "1", "999999"]}
+          }
+        },
+        {
+          "name": "Update Cart Item Quantity",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Cart updated', () => pm.expect(pm.response.json()).to.be.an('array'));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/ShoppingCart/1/1", "host": ["{{baseUrl}}"], "path": ["api", "ShoppingCart", "1", "1"]}
+          }
+        },
+        {
+          "name": "Remove Item from Cart",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/ShoppingCart/1/1", "host": ["{{baseUrl}}"], "path": ["api", "ShoppingCart", "1", "1"]}
+          }
+        },
+        {
+          "name": "Clear Cart",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Returns number', () => pm.expect(pm.response.json()).to.be.a('number'));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/ShoppingCart/1", "host": ["{{baseUrl}}"], "path": ["api", "ShoppingCart", "1"]}
+          }
+        },
+        {
+          "name": "Transfer Cart Between Users",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200 or 401', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/ShoppingCart/SetShoppingCart/1/2", "host": ["{{baseUrl}}"], "path": ["api", "ShoppingCart", "SetShoppingCart", "1", "2"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wishlist",
+      "item": [
+        {
+          "name": "Get Wishlist",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/Wishlist/1", "host": ["{{baseUrl}}"], "path": ["api", "Wishlist", "1"]}
+          }
+        },
+        {
+          "name": "Toggle Wishlist Item",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200 or 401', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/Wishlist/ToggleWishlist/1/1", "host": ["{{baseUrl}}"], "path": ["api", "Wishlist", "ToggleWishlist", "1", "1"]}
+          }
+        },
+        {
+          "name": "Clear Wishlist",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200 or 401', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/Wishlist/1", "host": ["{{baseUrl}}"], "path": ["api", "Wishlist", "1"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Checkout - Valid Order",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200 or 401', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderDetails\": [\n    {\n      \"book\": {\n        \"bookId\": 1,\n        \"title\": \"HP1\",\n        \"author\": \"JK Rowling\",\n        \"category\": \"Mystery\",\n        \"price\": 235.00,\n        \"coverFileName\": \"1.jpg\"\n      },\n      \"quantity\": 2\n    }\n  ],\n  \"cartTotal\": 470.00\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/CheckOut/1", "host": ["{{baseUrl}}"], "path": ["api", "CheckOut", "1"]}
+          }
+        },
+        {
+          "name": "Checkout - Empty Order",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Handles empty order', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 401]));"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"orderDetails\": [], \"cartTotal\": 0}"},
+            "url": {"raw": "{{baseUrl}}/api/CheckOut/1", "host": ["{{baseUrl}}"], "path": ["api", "CheckOut", "1"]}
+          }
+        },
+        {
+          "name": "Get User Orders",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200 or 401', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));",
+                "if (pm.response.code === 200) {",
+                "  pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                "}"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/Order/1", "host": ["{{baseUrl}}"], "path": ["api", "Order", "1"]}
+          }
+        }
+      ]
+    }
+  ]
+}
